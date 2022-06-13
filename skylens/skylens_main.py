@@ -253,7 +253,7 @@ class Skylens():
         if self.corr_indxs is None:
             self.corr_indxs=self.stack_indxs if self.stack_indxs else {}
         else:
-            print('not setting corr_indxs',self.do_cov , bool(self.corr_indxs))
+            print('not setting corr_indxs', bool(self.corr_indxs))
             return
         
         for tracer in self.tracer_utils.tracers:
@@ -647,14 +647,10 @@ class Skylens():
         if stack_corr_indxs is None:
             stack_corr_indxs=self.stack_indxs
 
-        do_cov0=self.do_cov
-        self.do_cov=False #do not need cl covariance
         #Donot use delayed here. Leads to error/repeated calculations
         cls_tomo_nu=self.cl_tomo(cosmo_h=cosmo_h,cosmo_params=cosmo_params, pk_params=pk_params,
                 corrs=corrs,bias_kwargs=bias_kwargs,bias_func=bias_func,stack_corr_indxs=stack_corr_indxs,
                 z_bins=z_bins,Ang_PS=Ang_PS,stack_file_write=stack_file_write)
-
-        self.do_cov=do_cov0
 
         cl=cls_tomo_nu['cl'] #Note that if window is turned off, pseudo_cl=cl
 #         clz=cls_tomo_nu['clz']
@@ -817,91 +813,8 @@ class Skylens():
 #                         print('stack data not finite at',corr,indx,dat_c[indx])
                     i+=1
         print('stack got 2pt')
-        if not self.do_cov:
-            out={'cov':None}
-            out[est]=D_final
-            return out
-
-        
-        cov_final=jnp.zeros((len(D_final),len(D_final)))#-999.#jnp.int(nD2*(nD2+1)/2)
-#         if self.sparse_cov:
-#             cov_final=sparse.DOK(cov_final)
-
-        indx0_c1=0
-        for ic1 in np.arange(len(corrs)):
-            corr1=corrs[ic1]
-            indxs_1=corr_indxs[corr1]
-            n_indx1=len(indxs_1)
-
-            indx0_c2=indx0_c1
-            for ic2 in np.arange(ic1,len(corrs)):
-                corr2=corrs[ic2]
-                indxs_2=corr_indxs[corr2]
-                n_indx2=len(indxs_2)
-
-                corr=corr1+corr2
-                n_s1_s2_1=1
-                n_s1_s2_2=1
-                if est=='xi':
-                    s1_s2_1=self.s1_s2s[corr1]
-                    s1_s2_2=self.s1_s2s[corr2]
-                    n_s1_s2_1=len(s1_s2_1)
-                    n_s1_s2_2=len(s1_s2_2)
-
-                for im1 in np.arange(n_s1_s2_1):
-                    start_m2=0
-                    if corr1==corr2:
-                        start_m2=im1
-                    for im2 in np.arange(start_m2,n_s1_s2_2):
-                        indx0_m1=(im1)*n_indx1*len_bins
-                        indx0_m2=(im2)*n_indx2*len_bins
-                        for i1 in np.arange(n_indx1):
-                            start2=0
-                            if corr1==corr2:
-                                start2=i1
-                            for i2 in np.arange(start2,n_indx2):
-                                indx0_1=(i1)*len_bins
-                                indx0_2=(i2)*len_bins
-                                indx=indxs_1[i1]+indxs_2[i2]
-#                                 i_here=jnp.where(self.cov_indxs[corr]==indx)[0]
-                                #i_here=dat['cov']['cov_indxs'][corr].index(indx)
-                                i_here=indx
-                                if est=='xi':
-                                    cov_here=dat['cov'][corr][s1_s2_1[im1]+s1_s2_2[im2]][i_here]['final']*1.
-                                    del dat['cov'][corr][s1_s2_1[im1]+s1_s2_2[im2]][i_here]
-                                else:
-                                    cov_here=dat['cov'][corr][i_here]['final_b']*1.
-                                    del dat['cov'][corr][i_here]
-
-                                if self.sparse_cov:
-                                    cov_here=cov_here.todense()
-                                # if im1==im2:
-                                i=indx0_c1+indx0_1+indx0_m1
-                                j=indx0_c2+indx0_2+indx0_m2
-
-                                cov_final=cov_final.at[i:i+len_bins,j:j+len_bins].set(cov_here)
-                                cov_final=cov_final.at[j:j+len_bins,i:i+len_bins].set(cov_here.T)
-                                if im1!=im2 and corr1==corr2:
-                                    i=indx0_c1+indx0_1+indx0_m2
-                                    j=indx0_c2+indx0_2+indx0_m1
-                                    cov_final=cov_final.at[i:i+len_bins,j:j+len_bins].set(cov_here.T)
-                                    cov_final=cov_final.at[j:j+len_bins,i:i+len_bins].set(cov_here)
-                                    #gc.collect()
-
-                indx0_c2+=n_indx2*len_bins*n_s1_s2_2
-            indx0_c1+=n_indx1*len_bins*n_s1_s2_1
-        print('stack got all')
-        del dat['cov']
-        out={'cov':cov_final}
+        out={}
         out[est]=D_final
-        if stack_file_write is not None:
-            print('stack writing to',stack_file_write)
-            with open(stack_file_write,'wb') as of:
-                jnp.savez(of,**out)
-#                 jnp.savez(of,est=D_final,cov=cov_final)#jnp.array(cov_final.todense()))
-#                 pickle.dump(out,of)
-            print('stack write done')
-            out=stack_file_write
         return out
     
 def calc_cl(zbin1={}, zbin2={},corr=('shear','shear'),cosmo_params=None,Ang_PS=None):

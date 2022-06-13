@@ -103,6 +103,7 @@ class window_utils():
         if self.store_win:
             Win=self.set_store_window(corrs=self.corrs,corr_indxs=self.corr_indxs,client=None,
                                   cl_bin_utils=self.cl_bin_utils,Win_cl=Win_cl,wig_3j_2=wig_3j_2)
+            Win=Win.result()
         else:
             Win=self.set_window_graph(corrs=self.corrs,corr_indxs=self.corr_indxs,
                                   client=None,cl_bin_utils=self.cl_bin_utils,Win_cl=Win_cl,wig_3j_2=wig_3j_2)
@@ -344,14 +345,14 @@ class window_utils():
         """
         dic={}
         nl=len(self.l)
-        crash
+        
         if self.bin_window:
             nl=len(self.l_bins)-1
 
         for ii_t in range(len(self.cl_keys)): #list(result[0].keys()):
             ii=ii_t#0#because we are deleting below
             ckt=self.cl_keys[ii_t]
-            print('combine_coupling_cl, here1')
+            
             result_ii=result[0][ii]
             corr=result_ii['corr']
             indxs=result_ii['indxs']
@@ -359,16 +360,17 @@ class window_utils():
             result0={}
             for k in result_ii.keys():
                 result0[k]=result_ii[k]
-            print('combine_coupling_cl, here2')
+            
             result0['M']=jnp.zeros((nl,nl))
             if  result_ii['M_noise'] is not None:
                 result0['M_noise']=jnp.zeros((nl,nl))
             if corr==('shear','shear') and indxs[0]==indxs[1]:
                 result0['M_B_noise']=jnp.zeros((nl,nl))
                 result0['M_B']=jnp.zeros((nl,nl))
-            print('combine_coupling_cl, here3')
+            
             for i_lm in range(len(self.lms)):
-                lm=jnp.asscalar(self.lms[i_lm])
+                # lm=jnp.asscalar(self.lms[i_lm])
+                lm=self.lms[i_lm]
                 start_i=0 if self.bin_window else lm
                 end_i=nl if self.bin_window else lm+self.step
                 
@@ -481,12 +483,12 @@ class window_utils():
         print('set_window_cl done',time.time()-t1)
         return Win_cl
         
-    def combine_coupling_cl(self,win_lm):
-        Win={}
-        if self.do_cl:
-            win_cl_lm={lmi:win_lm[lmi]['cl'] for lmi in self.lms}
-            Win['cl']=self.combine_coupling_cl(win_cl_lm)
-        return Win
+    # def combine_coupling_cl(self,win_lm):
+    #     Win={}
+    #     if self.do_cl:
+    #         win_cl_lm={lmi:win_lm[lmi]['cl'] for lmi in self.lms}
+    #         Win['cl']=self.combine_coupling_cl(win_cl_lm)
+    #     return Win
     
     def combine_coupling_xi(self,win_cl):
         Win={}
@@ -584,12 +586,12 @@ def combine_coupling_cl(WU,win_lm): #win_cl_lm,win_cov_lm):
 #         client=client_get(scheduler_info=self.scheduler_info)
         if self.do_cl:
             win_cl_lm={lmi:win_lm[lmi]['cl'] for lmi in self.lms}
-            try:
-                Win['cl']=self.combine_coupling_cl(win_cl_lm)
-            except Exception as err:
-                # print('combine_coupling_cl error: ',win_cl_lm[0][0])
-                print('combine_coupling_cl error: ',err,Win)
-                crash
+            # try:
+            Win['cl']=self.combine_coupling_cl(win_cl_lm)
+            # except Exception as err:
+            #     # print('combine_coupling_cl error: ',win_cl_lm[0][0])
+            #     print('combine_coupling_cl error: ',err,Win)
+            #     crash
             del win_cl_lm
         del win_lm,WU
         print('done combine lm',time.time()-t1)
