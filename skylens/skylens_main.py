@@ -50,9 +50,9 @@ class Skylens():
             inp_args=parse_dict(dic=locals(),use_defaults=use_defaults)
             self.__dict__.update(inp_args)
             # del inp_args
-        self.l0=self.l*1.
-        if self.l_cl is None:
-            self.l_cl=self.l
+        self.l0=self.l*1. #in case of imaster, l is changed to effective bin ell. l0 store original ell in case needed
+        if self.l_cl is None: #TODO: cl and pseudo-cl can have different binning and ell ranges. l_cl should store ell for cl calculations and the default ell should be for pseudo-cl.
+            self.l_cl=self.l 
         self.l_cl0=self.l_cl*1.
         
         self.set_WT()
@@ -90,9 +90,6 @@ class Skylens():
                         #FIXME: Need a dict for these args
         self.set_cl_funcs()
         
-#         if self.do_xi and not self.xi_win_approx: #FIXME: Since the `aprrox' is actually the correct way, change the notation.
-#             self.do_pseudo_cl=True #we will use pseudo_cl transform to get correlation functions.
-
         self.Win0=window_utils(window_l=self.window_l,l=self.l0,l_bins=self.l_bins,l_cl=self.l_cl0,
                                corrs=self.corrs,s1_s2s=self.s1_s2s,scheduler_info=self.scheduler_info,
                                use_window=self.use_window, corr_indxs=self.stack_indxs,z_bins=self.tracer_utils.z_win,
@@ -415,7 +412,7 @@ class Skylens():
                 cl_b=self.binning.bin_1d(xi=cl,bin_utils=self.cl_bin_utils)
             return cl_b
 
-    def calc_pseudo_cl(self,cl,Win):# moved outside the class. No used now.
+    def calc_pseudo_cl(self,cl,Win):# moved outside the class. Not used now.
         pcl=cl@Win['M']
         return  pcl
         
@@ -576,7 +573,8 @@ class Skylens():
             return self.cl_tomo_short(corrs=corrs,stack_corr_indxs=stack_corr_indxs,
                                       zkernel=zkernel,Ang_PS=Ang_PS,Win=Win,cl_bin_utils=cl_bin_utils)
     
-    def cl_tomo_short(self,corrs=None,stack_corr_indxs=None,Ang_PS=None,zkernel=None,cosmo_params=None,Win=None,cl_bin_utils=None):
+    def cl_tomo_short(self,corrs=None,stack_corr_indxs=None,Ang_PS=None,zkernel=None,
+                        cosmo_params=None,Win=None,cl_bin_utils=None):
         """
          Same as cl_tomo, except no delayed is used and it only returns a stacked vector of binned pseudo-cl.
          This function is useful for mcmc where we only need to compute pseudo-cl, and want to reduce the
@@ -707,9 +705,10 @@ class Skylens():
         out['xi']=xi
         out['cl']=cls_tomo_nu
         out['zkernel']=zkernel
-        return out
+        return out 
 
-    def xi_tomo_short(self,corrs=None,stack_corr_indxs=None,Ang_PS=None,zkernel=None,cosmo_params=None,Win=None,WT_binned=None,WT=None,xi_bin_utils=None):
+    def xi_tomo_short(self,corrs=None,stack_corr_indxs=None,Ang_PS=None,zkernel=None,cosmo_params=None,
+                    Win=None,WT_binned=None,WT=None,xi_bin_utils=None):
         """
          Same as xi_tomo / cl_tomo_short, except no delayed is used and it only returns a stacked vector of binned xi.
          This function is useful for mcmc where we only need to compute xi, and want to reduce the
@@ -815,7 +814,7 @@ class Skylens():
         print('stack got 2pt')
         out={}
         out[est]=D_final
-        return out
+        return out 
     
 def calc_cl(zbin1={}, zbin2={},corr=('shear','shear'),cosmo_params=None,Ang_PS=None):
     """
@@ -836,7 +835,7 @@ def calc_pseudo_cl(cl,Win):
     pcl=cl@Win['M']
     return  pcl
 
-def calc_cl_pseudo_cl(zbin1={}, zbin2={},corr=('shear','shear'),cosmo_params=None,Ang_PS=None,Win=None):#FIXME: this can be moved outside the class.thenwe don't need to serialize self.
+def calc_cl_pseudo_cl(zbin1={}, zbin2={},corr=('shear','shear'),cosmo_params=None,Ang_PS=None,Win=None):
     """
         Combine calc_cl and calc_pseudo_cl functions
     """

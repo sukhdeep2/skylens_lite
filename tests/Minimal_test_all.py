@@ -79,7 +79,7 @@ corr_gg=('galaxy','galaxy')
 corr_ll=('shear','shear')
 corrs=[corr_ll,corr_ggl,corr_gg]
 
-use_binned_ls=[False,True]
+use_binned_ls=[True] #False,
 
 store_wins=[True] #[False,True] # False is deprecated, needs fixing if to be used.
 
