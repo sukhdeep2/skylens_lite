@@ -20,7 +20,7 @@ class binning:
             if bu["bin_indx"][i] < 0 or bu["bin_indx"][i] >= bu["n_bins"]:
                 continue
             # binning_mat[i,bu['bin_indx'][i]]=1.
-            binning_mat = binning_mat.at[i, bu["bin_indx"][i]].set(0)
+            binning_mat = binning_mat.at[i, bu["bin_indx"][i]].set(1)
         bu["binning_mat"] = binning_mat
 
         r2 = jnp.sort(
