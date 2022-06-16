@@ -67,12 +67,12 @@ cosmo_h = cosmo.clone(H0=100)
 
 cosmo_params = dict(
     {
-        "h": cosmo.h,
-        "Omb": cosmo.Ob0,
-        "Omd": cosmo.Om0 - cosmo.Ob0,
+        "h": 0.7,
+        "Omb": 0.046,
+        "Omd": 0.233,
         "s8": 0.817,
-        "Om": cosmo.Om0,
-        "Ase9": 2.2,
+        "Om": 0.279,
+        "Ase9": 2.1842,
         "mnu": cosmo.m_nu[-1].value,
         "Omk": cosmo.Ok0,
         "tau": 0.06,

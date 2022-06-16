@@ -102,12 +102,12 @@ class Skylens:
 
         if logger is None:  # not really being used right now
             self.logger = logging.getLogger()
-            self.logger.setLevel(level=logging.DEBUG)
-            logging.basicConfig(
-                format="%(asctime)s %(levelname)s:%(message)s",
-                level=logging.DEBUG,
-                datefmt="%I:%M:%S",
-            )
+            #self.logger.setLevel(level=logging.DEBUG)
+            #logging.basicConfig(
+            #    format="%(asctime)s %(levelname)s:%(message)s",
+            #    level=logging.DEBUG,
+            #    datefmt="%I:%M:%S",
+            #)
 
         if tracer_utils is None:
             self.tracer_utils = Tracer_utils(
