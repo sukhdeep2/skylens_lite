@@ -1,34 +1,40 @@
 # TODO:
 # - Allow windows to be read from a file.
 
-import dask
-import cProfile, pstats
-from dask import delayed
-import sparse
-from skylens.wigner_transform import *
-from skylens.binning import *
-import numpy as np
-import jax.numpy as jnp
-import healpy as hp
-from scipy.interpolate import interp1d
-import warnings, logging
-from distributed import LocalCluster
-from dask.distributed import Client, get_client, Semaphore
-import zarr
-from dask.threaded import get
-from distributed.client import Future
-import time, gc
+import copy
+import cProfile
+import gc
+import logging
+import pickle
+import pstats
+import time
+import warnings
+from concurrent.futures import ALL_COMPLETED, ThreadPoolExecutor
+from concurrent.futures import wait as cf_wait
+from functools import partial
+from itertools import islice
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool as Pool
-from skylens.utils import *
-import pickle
-import copy
-import psutil
-from itertools import islice
 
+import dask
+import healpy as hp
 # from jax import jit
 import jax
-import logging
+import jax.numpy as jnp
+import numpy as np
+import psutil
+import sparse
+import zarr
+from dask import delayed
+from dask.distributed import Client, Semaphore, get_client
+from dask.threaded import get
+from distributed import LocalCluster
+from distributed.client import Future
+from scipy.interpolate import interp1d
+
+from skylens.binning import *
+from skylens.utils import *
+from skylens.wigner_transform import *
 
 
 class window_utils:
@@ -123,8 +129,6 @@ class window_utils:
 
         self.cl_keys = self.set_cl_keys(corrs=None, corr_indxs=None)
         print("get_Win, total cl keys: ", len(self.cl_keys))
-
-        client = get_client(address=self.scheduler_info["address"])
 
         wig_3j_2 = None
 
@@ -782,10 +786,6 @@ class window_utils:
         pass
 
 
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import wait as cf_wait
-from concurrent.futures import ALL_COMPLETED
-from functools import partial
 
 
 def get_cl_coupling_lm(WU, lm, wig_3j_2_lm, mf_pm, win, cl_bin_utils=None):
