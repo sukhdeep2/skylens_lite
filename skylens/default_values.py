@@ -61,7 +61,7 @@ zkernel_func_names = {tracer: "set_kernel" for tracer in ["shear", "galaxy", "ka
 
 
 """cosmology and power spectra"""
-from astropy.cosmology import Planck15 as cosmo
+from astropy.cosmology import Planck18 as cosmo
 
 cosmo_h = cosmo.clone(H0=100)
 
