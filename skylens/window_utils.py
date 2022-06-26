@@ -760,8 +760,7 @@ class window_utils:
                         Win_lm,
                         threshold=max(0.5, 1 - nworkers * 1.2 / len(lm_submitted)),
                     )
-                if self.do_pseudo_cl:
-                    self.cleanup()
+                self.cleanup()
         print("done combine lm", time.time() - t1)
         return Win
 
@@ -784,8 +783,6 @@ class window_utils:
         self,
     ):  # need to free all references to wigner_3j, mf and wigner_3j_2... this doesnot help with peak memory usage
         pass
-
-
 
 
 def get_cl_coupling_lm(WU, lm, wig_3j_2_lm, mf_pm, win, cl_bin_utils=None):
