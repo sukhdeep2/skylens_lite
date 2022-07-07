@@ -217,13 +217,16 @@ def get_cl_with_correction(nside, zs_pzs_fname):
 
     # load zs,pzs
     d_pzs = np.loadtxt(zs_pzs_fname)
-    zs, pzs = d_pzs[:, 0], d_pzs[:,1]
-    q_over_chi_func = efficiency_q_over_chi(zs, pzs, cosmo)
+    zs1, pzs2 = d_pzs[:, 0], d_pzs[:, 1]
+    zs2, pzs2 = d_pzs[:, 2], d_pzs[:, 3]
+    
+    q_over_chi_func1 = efficiency_q_over_chi(zs1, pzs1, cosmo)
+    q_over_chi_func2 = efficiency_q_over_chi(zs2, pzs2, cosmo)
 
     #l = np.logspace(0, 5, 1024)
     l = np.arange(3 * nside)
     cl = angular_power_spectrum_finite_shell(l, cosmo, linear_power,
-                                  q_over_chi_func,q_over_chi_func,
+                                  q_over_chi_func1, q_over_chi_func2,
                                   halofit=halofit)
 
     # correction for resolution effect
