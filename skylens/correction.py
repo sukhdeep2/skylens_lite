@@ -217,8 +217,8 @@ def get_cl_with_correction(nside, zs_pzs_fname):
 
     # load zs,pzs
     d_pzs = np.loadtxt(zs_pzs_fname)
-    zs1, pzs1 = d_pzs[:, 0], d_pzs[:, 1]
-    zs2, pzs2 = d_pzs[:, 2], d_pzs[:, 3]
+    zs1, pzs1 = d_pzs[0, :], d_pzs[1, :]
+    zs2, pzs2 = d_pzs[2, :], d_pzs[3, :]
     
     q_over_chi_func1 = efficiency_q_over_chi(zs1, pzs1, cosmo)
     q_over_chi_func2 = efficiency_q_over_chi(zs2, pzs2, cosmo)
