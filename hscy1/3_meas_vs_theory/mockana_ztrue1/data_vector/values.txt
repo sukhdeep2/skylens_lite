@@ -1,0 +1,3 @@
+hsc_chi2 = 76.56100231555425
+hsc_log_det = 0.0
+hsc_norm = -0.0
