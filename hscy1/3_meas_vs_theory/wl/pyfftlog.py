@@ -1,4 +1,4 @@
-#coding: utf-8
+# coding: utf-8
 """
 
 `pyfftlog` -- Python version of FFTLog
@@ -183,8 +183,10 @@ from __future__ import print_function
 from builtins import input
 import numpy as np
 from scipy.special import loggamma
+
 # from scipy.fftpack._fftpack import drfft
 from scipy.fftpack import rfft, irfft
+
 # from scipy.fftpack.basic import _raw_fft
 
 
@@ -246,7 +248,7 @@ def fhti(n, mu, dlnr, q=0, kr=1, kropt=0):
     """
 
     # adjust kr
-    if kropt == 0:    # keep kr as is
+    if kropt == 0:  # keep kr as is
         pass
     elif kropt == 1:  # change kr to low-ringing kr quietly
         kr = krgood(mu, q, dlnr, kr)
@@ -255,16 +257,16 @@ def fhti(n, mu, dlnr, q=0, kr=1, kropt=0):
         if abs(kr / d - 1) >= 1e-15:
             kr = d
             print((" kr changed to ", kr))
-    else:             # option to change kr to low-ringing kr interactively
+    else:  # option to change kr to low-ringing kr interactively
         d = krgood(mu, q, dlnr, kr)
         if abs(kr / d - 1.0) >= 1e-15:
             print((" change kr = ", kr))
             print((" to low-ringing kr = ", d))
             go = eval(input("? [CR, y=yes, n=no, x=exit]: "))
-            if go.lower() in ['', 'y']:
+            if go.lower() in ["", "y"]:
                 kr = d
                 print((" kr changed to ", kr))
-            elif go.lower() == 'n':
+            elif go.lower() == "n":
                 print((" kr left unchanged at ", kr))
             else:
                 print("exit")
@@ -301,7 +303,7 @@ def fhti(n, mu, dlnr, q=0, kr=1, kropt=0):
         # Altogether 3 + 2*(n/2) elements used for q = 0, which is n+3 for even
         # n, n+2 for odd n.
 
-    else:       # biased case (q != 0)
+    else:  # biased case (q != 0)
         ln2 = np.log(2.0)
         ln2kr = np.log(2.0 / kr)
         xp = (mu + 1 + q) / 2.0
@@ -321,10 +323,10 @@ def fhti(n, mu, dlnr, q=0, kr=1, kropt=0):
                 # Amplitude and Argument of U_mu(q)
                 amp = np.exp(ln2 * q)
                 if xp > xm:
-                    m = np.arange(1,  np.round(xp - xm) + 1)
+                    m = np.arange(1, np.round(xp - xm) + 1)
                     amp *= xm + m - 1
                 elif xp < xm:
-                    m = np.arange(1,  np.round(xm - xp) + 1)
+                    m = np.arange(1, np.round(xm - xp) + 1)
                     amp /= xp + m - 1
                 arg = np.round(xp + xm) * np.pi
 
@@ -336,18 +338,30 @@ def fhti(n, mu, dlnr, q=0, kr=1, kropt=0):
                 # potentially infinite constant in the transform.
 
                 if xpnegi:
-                    print(('fhti: (mu+1+q)/2 =', np.round(xp), 'is -ve integer',
-                          ', yields singular transform:\ntransform will omit',
-                          'additive constant that is generically infinite,',
-                          '\nbut that may be finite or zero if the sum of the',
-                          'elements of the input array a_j is zero.'))
+                    print(
+                        (
+                            "fhti: (mu+1+q)/2 =",
+                            np.round(xp),
+                            "is -ve integer",
+                            ", yields singular transform:\ntransform will omit",
+                            "additive constant that is generically infinite,",
+                            "\nbut that may be finite or zero if the sum of the",
+                            "elements of the input array a_j is zero.",
+                        )
+                    )
                 else:
-                    print(('fhti: (mu+1-q)/2 =', np.round(xm), 'is -ve integer',
-                          ', yields singular inverse transform:\n inverse',
-                          'transform will omit additive constant that is',
-                          'generically infinite,\nbut that may be finite or',
-                          'zero if the sum of the elements of the input array',
-                          'a_j is zero.'))
+                    print(
+                        (
+                            "fhti: (mu+1-q)/2 =",
+                            np.round(xm),
+                            "is -ve integer",
+                            ", yields singular inverse transform:\n inverse",
+                            "transform will omit additive constant that is",
+                            "generically infinite,\nbut that may be finite or",
+                            "zero if the sum of the elements of the input array",
+                            "a_j is zero.",
+                        )
+                    )
                 amp = 0
                 arg = 0
 
@@ -477,8 +491,7 @@ def fftl(a, xsave, rk=1, tdir=1):
     #      = ã(k) (k/kc)^[-dir*(q+.5)] (kc rc)^(-dir*q) (rc/kc)^(dir*.5)
     lnkr = np.log(kr)
     lnrk = np.log(rk)
-    fct *= np.exp(-tdir * ((q + 0.5) * (j - jc)
-                           * dlnr + q * lnkr - lnrk / 2.0))
+    fct *= np.exp(-tdir * ((q + 0.5) * (j - jc) * dlnr + q * lnkr - lnrk / 2.0))
 
     return fct
 
@@ -619,10 +632,10 @@ def fhtq(a, xsave, tdir=1):
         # problem(2*m)atical last element, for even n
         if np.mod(n, 2) == 0:
             ar = xsave[-2]
-            if (tdir == 1):  # forward transform: multiply by real part
+            if tdir == 1:  # forward transform: multiply by real part
                 # Why? See http://casa.colorado.edu/~ajsh/FFTLog/index.html#ure
                 fct[-1] *= ar
-            elif (tdir == -1):  # backward transform: divide by real part
+            elif tdir == -1:  # backward transform: divide by real part
                 # Real part ar can be zero for maximally bad choice of kr.
                 # This is unlikely to happen by chance, but if it does, policy
                 # is to let it happen.  For low-ringing kr, imaginary part ai
@@ -664,7 +677,7 @@ def fhtq(a, xsave, tdir=1):
             ar = xsave[3 * m + 2] * xsave[3 * m + 1]
             if tdir == 1:  # forward transform: multiply by real part
                 fct[-1] *= ar
-            elif (tdir == -1):  # backward transform: divide by real part
+            elif tdir == -1:  # backward transform: divide by real part
                 # Real part ar can be zero for maximally bad choice of kr.
                 # This is unlikely to happen by chance, but if it does, policy
                 # is to let it happen.  For low-ringing kr, imaginary part ai
