@@ -30,13 +30,14 @@ class Worker(object):
             0.9479,  1.0334,  1.1233,  1.2179, 1.3176,  1.423 , 1.5345, 1.6528,
             1.7784,  1.9121,  2.0548,  2.2072, 2.3704,  2.5455, 2.7338, 2.9367,
             3.1559,  3.3932,  3.6507,  3.9309, 4.2367,  4.5712, 4.9382,
-            5.3423],dtype=float)
+            5.3423], dtype=float)
         self.nbins=len(zmid)
         dzs     =   zmid[1:] - zmid[:-1]
         zbounds =   np.zeros(self.nbins+1)
-        zbounds[0]=0.
+        zbounds[0]=0.01
         zbounds[-1]=zmid[-1]+0.2
         zbounds[1:-1]=zmid[:-1]+dzs/2.
+        print(zbounds)
         self.zmid=zmid
         self.zlow=zbounds[:-1]
         self.zhigh=zbounds[1:]
@@ -48,16 +49,20 @@ class Worker(object):
         isim=Id//21
         irot=Id%21
         ofname= os.path.join(self.outdir,'nz_r%03d_rotmat%02d.fits' %(isim,irot))
-        if os.path.isfile(ofname):
+        rewrite = True
+        if os.path.isfile(ofname) and not rewrite:
             out  =  pyfits.getdata(ofname)
         else:
+            print('measuring for ID: %d' %(Id))
             out  =  np.zeros((self.nz,self.nbins))
-            for i in range(3,4):
-                znmi=   os.path.join(self.indir,'r%03d_rot%02d_zbin%d.fits' %(isim,irot,i+1))
-                dd =   pyfits.getdata(znmi)
-                out[i]=np.histogram(dd['z_source_mock'],bins=self.zbounds)[0]
-            pyfits.writeto(ofname,out)
-        print(out.shape)
+            for i in range(4):
+                znmi= os.path.join(self.indir,'r%03d_rot%02d_zbin%d.fits' %(isim,irot,i+1))
+                dd = pyfits.getdata(znmi)
+                tmp = np.histogram(dd['z_source_mock'],bins=self.zbounds)[0]
+                sumt= np.sum(tmp)
+                out[i]= tmp / sumt
+                del tmp, sumt
+            pyfits.writeto(ofname,out,overwrite=True)
         return out
 
     def __call__(self,Id):
