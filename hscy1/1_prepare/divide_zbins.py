@@ -2,7 +2,7 @@
 import gc
 import os
 import glob
-import fitsio
+import astropy.io.fits as pyfits
 import argparse
 import numpy as np
 fields=['XMM','VVDS','HECTOMAP','GAMA09H','WIDE12H','GAMA15H']
@@ -16,7 +16,7 @@ def prepare_data(mockDir,isim,irot):
         fnamelist=glob.glob(sDir)
         # append data in every tract
         for fname in fnamelist:
-            data=fitsio.read(fname)
+            data=pyfits.getdata(fname)
             dfield.append(data)
             del data
             #os.remove(fname)
@@ -30,7 +30,7 @@ def prepare_data(mockDir,isim,irot):
 
 def main(isim,irot):
     nz=4
-    zdat=fitsio.read('/hildafs/datasets/shared_phy200017p/HSC_shape_catalog_Y1/catalog_gals_mock/ephor_zbest.fits')
+    zdat=pyfits.getdata('/hildafs/datasets/shared_phy200017p/HSC_shape_catalog_Y1/catalog_gals_mock/ephor_zbest.fits')
     odir='/hildafs/datasets/shared_phy200017p/HSC_shape_catalog_Y1/catalog_gals_mock/4zbins/'
     dDir='/hildafs/projects/phy200017p/share/raytracesim/HSC_S16A/downloads/'
     oname=os.path.join(odir,'r%03d_rot%02d_zbin*.fits' %(isim,irot))
@@ -47,7 +47,7 @@ def main(isim,irot):
         zmax=(iz+2)*0.3
         msk=(zdat['ephor_photoz_best']>=zmin)&(zdat['ephor_photoz_best']<zmax)
         print(oname)
-        fitsio.write(oname,mock[msk])
+        pyfits.writeto(oname,mock[msk],overwrite=True)
         del zmin,zmax,msk,oname
     del mock
     return

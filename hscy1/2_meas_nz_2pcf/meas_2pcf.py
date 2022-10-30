@@ -27,20 +27,22 @@ class Worker(object):
         assert os.path.isdir(self.outdir), '%s does not exist' %self.outdir
         self.nbins=30
         self.nz=4
-        self.nzcross=int(self.nz*(self.nz+1)/2)
+        self.nzcross=self.nz#int(self.nz*(self.nz+1)/2)
         return
 
     def run(self,Id):
         isim =  Id//21
         irot =  Id%21
         ofname=  os.path.join(self.outdir,'2pcf_r%03d_rotmat%02d.fits' %(isim,irot))
-        if os.path.isfile(ofname):
+        rewrite = False
+        if os.path.isfile(ofname) and not rewrite:
             out =   pyfits.getdata(ofname)
         else:
+            print('processing ID: %d' %(Id))
             out =   np.zeros(shape=(self.nzcross,2,self.nbins))
             cor =   treecorr.GGCorrelation(nbins=self.nbins,min_sep=0.25,max_sep=360.,sep_units='arcmin')
             ic  =   0
-            for i in range(3,self.nz):
+            for i in range(0,self.nz):
                 # znmi=   os.path.join(self.indir,'r%03d_rot%02d_zbin%d.fits' %(isim,irot,i+1))
                 # ddi =   pyfits.getdata(znmi)
                 # msk =   (ddi['e1_mock']**2.+ddi['e2_mock']**2.)<20.
@@ -51,25 +53,29 @@ class Worker(object):
                 #         ra=ddi['ra_mock'],dec=ddi['dec_mock'],\
                 #         ra_units='deg',dec_units='deg')
                 # del msk
-                for j in range(i,self.nz):
-                    ic=9
+                for j in range(i,i+1):
                     znmj=   os.path.join(self.indir,'r%03d_rot%02d_zbin%d.fits' %(isim,irot,j+1))
                     ddj =   pyfits.getdata(znmj)
                     msk =   (ddj['e1_mock']**2.+ddj['e2_mock']**2.)<10.
                     msk =   msk&((ddj['shear1_sim']**2.+ddj['shear2_sim']**2.)<10.)
+                    msk =   msk&(ddj['z_source_mock']>0.)
                     ddj =   ddj[msk]
+                    del msk
                     # noiseless case
                     catJ=   treecorr.Catalog(g1=ddj['shear1_sim'],\
                             g2=-ddj['shear2_sim'],\
-                            ra=ddj['ra_mock'],dec=ddj['dec_mock'],\
-                            ra_units='deg',dec_units='deg')
+                            ra=ddj['ra_mock'], dec=ddj['dec_mock'],\
+                            ra_units='deg', dec_units='deg')
+
+                    del ddj
                     cor.clear()
                     cor.process(catJ,catJ)
+                    del catJ
                     out[ic,0,:]=cor.xip
                     out[ic,1,:]=cor.xim
+                    cor.clear()
                     ic+=1
-                    del msk
-            pyfits.writeto(ofname,out)
+            pyfits.writeto(ofname, out, overwrite=True)
         return out
 
     def __call__(self,Id):
