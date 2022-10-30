@@ -57,7 +57,7 @@ def Extrap1d(x,y):
         return ans
     return func
 
-def efficiency_q_over_chi(zs, pzs, cosmo, form='func', zl_max=None, zl_bin=100):
+def efficiency_q_over_chi(zs, pzs, cosmo, form='func', zl_max=None, zl_bin=800):
     """Gets lensing efficiency.
 
     Args:
@@ -76,15 +76,15 @@ def efficiency_q_over_chi(zs, pzs, cosmo, form='func', zl_max=None, zl_bin=100):
     prefactor = 3.0/2.0*cosmo.Om0*H0**2*(1+zl)
 
     # integrate of nz
-    pzs_norm = simps(pzs, zs)
+    # pzs_norm = simps(pzs, zs)
+    pzs_norm = np.sum(pzs)
     chis = cosmo.comoving_distance(zs).value
 
     q = []
     for _chil in chil:
         integrand = _chil*(chis-_chil)/chis*pzs/pzs_norm
         integrand[integrand<0] = 0.0
-        _q = simps(integrand, zs)
-        q.append(_q)
+        q.append(np.sum(integrand))
     q = prefactor*np.array(q)
 
     if form == 'func':
@@ -160,36 +160,30 @@ def angular_power_spectrum(l, cosmo, linear_model,
 
     # init integration bin
     if zl_scale == 'lin':
-        zl = np.linspace(1e-7, 7.0, zl_bin)
+        zl = np.linspace(1e-6, 7.0, zl_bin)
     elif zl_scale == 'log':
-        zl = np.logspace(-7, np.log10(3.0), zl_bin)
+        zl = np.logspace(-6, np.log10(3.0), zl_bin)
     elif zl_scale == 'loglin':
-        zl = np.concatenate([np.logspace(-7,-1.1, zl_bin[0]), np.linspace(1e-1, 3.0, zl_bin[1])])
+        zl = np.concatenate([np.logspace(-6,-1.01, zl_bin[0]), np.linspace(1e-1, 3.0, zl_bin[1])])
     else:
         raise ValueError('z_scale can only be lin, log or loglin.')
 
     # compute the comoving distance at lens redshift.
-    zl_sparse = np.linspace(1e-7, 3, 50)
-    chil_sparse = cosmo.comoving_distance(zl_sparse).value
-
-    chil= ius(zl_sparse, chil_sparse)(zl)
-    del zl_sparse, chil_sparse
-
-    # get linear matter power spectrum, k bin below is sufficient.
-    k = np.logspace(-6, 4, 1000)
-
+    chil = cosmo.comoving_distance(zl).value
     # init linear power
     linear_model.init_pklin_array(zl)
-
-    # get list of the functions of interpolated nonlinear matter power spectrum.
-    pkfunc_list = get_pkfunc(zl, k, linear_model, cosmo.h.copy(), halofit)
-
     # get efficiency
     q1_over_chil = q1_over_chi_func(chil)
     q2_over_chil = q2_over_chi_func(chil)
 
+
+    # get linear matter power spectrum, k bin below is sufficient.
+    k = np.logspace(-6, 6, 2000)
+    # get list of the functions of interpolated nonlinear matter power spectrum.
+    pkfunc_list = get_pkfunc(zl, k, linear_model, cosmo.h.copy(), halofit)
     cl_sparse = []
-    l_sparse = np.logspace(-1, 5.5, 400)
+    l_sparse =  np.logspace(-1, 6, 200)
+
     for _l in l_sparse:
         pk = get_pk(_l, chil, pkfunc_list)
         _cl = simps(q1_over_chil*q2_over_chil*pk, chil)
@@ -201,7 +195,8 @@ def angular_power_spectrum(l, cosmo, linear_model,
 
 def angular_power_spectrum_finite_shell(l, cosmo, linear_model,
                            q1_over_chi_func, q2_over_chi_func, halofit):
-    """Computes angular power spectrum of cosmic shear. Notes,
+    """Computes angular power spectrum of cosmic shear.
+    NOTE:
     zl_scale='loglin', zl_bin=[40,40] is sufficient setting to give 0.5%
     accuracy.
 
@@ -215,13 +210,13 @@ def angular_power_spectrum_finite_shell(l, cosmo, linear_model,
         cl (ndarray):               cosmic shear angular power spectrum at l
     """
 
-    z   =   np.linspace(0.0, 7, 1000)
+    z   =   np.logspace(-3.8,0.78,1000)
     #
     chi =   cosmo.comoving_distance(z).value
-    chi2z = ius(chi, z)
+    chi2z = ius(chi, z, ext = 2)
     del z,chi
     # get linear matter power spectrum, k bin below is sufficient.
-    k   =   np.logspace(-6, 4, 1000)
+    k   =   np.logspace(-6, 5, 1000)
     # calculate the effective lensing kernel (for finite number of shells)
     N   =   38
     chil=   np.zeros(N)
@@ -239,13 +234,14 @@ def angular_power_spectrum_finite_shell(l, cosmo, linear_model,
     # init linear pk
     linear_model.init_pklin_array(zl)
     # get list of the functions of interpolated nonlinear matter power spectrum.
-    pkfunc_list = get_pkfunc(zl, k, linear_model, cosmo.h.copy(), halofit,do_corr_shell=True)
+    pkfunc_list = get_pkfunc(zl, k, linear_model, cosmo.h.copy(), \
+            halofit, do_corr_shell=True)
     # get efficiency q
     q1 = q1_over_chi_func(chil)*chil
     q2 = q2_over_chi_func(chil)*chil
 
     cl_sparse = []
-    l_sparse = np.logspace(-1, 5.5, 400)
+    l_sparse = np.logspace(-1, 6, 500)
     for _l in l_sparse:
         pk = get_pk(_l, chil, pkfunc_list)
         _cl = simps(q1*q2*pk/chieff**2.,chil)
@@ -253,7 +249,7 @@ def angular_power_spectrum_finite_shell(l, cosmo, linear_model,
     cl = Extrap1d(l_sparse, np.array(cl_sparse))(l)
     return cl
 
-def cl2xipm(l, cl, N_extrap_low=1500):
+def cl2xipm(l, cl, N_extrap_low=0, N_extrap_high= None):
     """Converts cl to xi_{+/-} using fftlog.
 
     Args:
@@ -267,7 +263,7 @@ def cl2xipm(l, cl, N_extrap_low=1500):
         xim (ndarray):      xi_-
     """
     hankel = fftlog.hankel(l, l**2*cl, 1.01,
-                           N_extrap_low=N_extrap_low, N_extrap_high=0,
+                           N_extrap_low=N_extrap_low, N_extrap_high=N_extrap_high,
                            c_window_width=0.25)
     tp, xip = hankel.hankel(0)
     tm, xim = hankel.hankel(4)
@@ -299,11 +295,11 @@ class camb_class:
         omch2 = cparam[1]
         Om_L = cparam[2]
         h = ( (ombh2+omch2+omnuh2)/(1-Om_L) )**0.5
+        self.h = h
         H0 = 100.*h
         As = np.exp(cparam[3])*1.e-10
         ns = cparam[4]
         w  = cparam[5]
-        self.h = h
 
         self.pars = camb.CAMBparams()
         self.pars.set_cosmology(H0=H0, ombh2=ombh2, omch2=omch2, mnu=mnu, omk=omk)
@@ -314,7 +310,7 @@ class camb_class:
         self.omk = omk
         return
 
-    def init_pklin_array(self, z, kmax=1e1, minkh=1e-5, maxkh=1e1):
+    def init_pklin_array(self, z, kmax=5e2, minkh=1e-5, maxkh=5e2):
         """Initializes linear power function at different redshift snapshots
         """
         if not 0.0 in z:
